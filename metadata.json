@@ -1,0 +1,5 @@
+{
+  "name": "SAV Personnel Directory",
+  "description": "A specialized personnel management tool for the State Audit Office of Vietnam, allowing users to load Excel directories and query staff by unit and serial number.",
+  "requestFramePermissions": []
+}
