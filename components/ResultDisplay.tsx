@@ -25,7 +25,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ employee, hasSearched }) 
   }
 
   return (
-    <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden max-w-3xl mx-auto flex flex-col md:flex-row transition-all hover:scale-[1.01]">
+    <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden w-full max-w-5xl mx-auto flex flex-col md:flex-row transition-all hover:scale-[1.01]">
       {/* Left Sidebar Info */}
       <div className="bg-blue-800/90 p-8 md:w-1/3 flex flex-col items-center justify-center text-center text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-700/50 to-indigo-900/50 pointer-events-none"></div>
@@ -52,12 +52,12 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ employee, hasSearched }) 
         </div>
 
         <div className="relative z-10">
-          <div className="mb-1">
-            <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">Công chức được xác minh tài sản, thu nhập</span>
+          <div className="mb-2 inline-flex w-fit">
+            <span className="text-xs md:text-sm font-black text-blue-600 uppercase tracking-[0.2em] whitespace-nowrap">Người được xác minh tài sản, thu nhập năm 2026</span>
           </div>
-          <h2 className="text-4xl font-extrabold text-slate-9000 mb-7 leading-tight drop-shadow-sm">{employee.fullName}</h2>
+          <h2 className="text-5xl md:text-6xl font-extrabold text-red-700 mb-8 leading-tight drop-shadow-sm">{employee.fullName}</h2>
           
-          <div className="space-y-6">
+          <div className="space-y-6 mt-4">
             <div className="group transition-all">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block group-hover:text-blue-500">Chức danh / Vị trí</label>
               <div className="flex items-center gap-3">
@@ -66,7 +66,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ employee, hasSearched }) 
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <span className="text-slate-800 font-bold text-xl">{employee.jobTitle || 'Cán bộ'}</span>
+                <span className="text-blue-800 font-bold text-xl">{employee.jobTitle || 'Cán bộ'}</span>
               </div>
             </div>
 
@@ -78,7 +78,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ employee, hasSearched }) 
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                 </div>
-                <span className="text-slate-700 font-semibold text-lg">{employee.unit}</span>
+                <span className="text-blue-800 font-semibold text-lg">{employee.unit}</span>
               </div>
             </div>
           </div>

@@ -5,9 +5,10 @@ import { Employee, PersonnelData } from './types';
 import FileUpload from './components/FileUpload';
 import QueryForm from './components/QueryForm';
 import ResultDisplay from './components/ResultDisplay';
-import Fireworks from './components/Fireworks';
+import SelectedEmployeesList from './components/SelectedEmployeesList';
+import FinalResultDisplay from './components/FinalResultDisplay';
 
-type AppView = 'upload' | 'search' | 'result';
+type AppView = 'upload' | 'search' | 'result' | 'final';
 
 const App: React.FC = () => {
   const [personnelData, setPersonnelData] = useState<PersonnelData | null>(null);
@@ -19,6 +20,11 @@ const App: React.FC = () => {
   const [selectedUnit, setSelectedUnit] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
   const [searchResult, setSearchResult] = useState<Employee | null>(null);
+  
+  // Selected employees list - grouped by unit
+  const [selectedEmployees, setSelectedEmployees] = useState<Employee[]>([]);
+  const [unitListModal, setUnitListModal] = useState<{ unit: string; employees: Employee[] } | null>(null);
+  const [displayUnitList, setDisplayUnitList] = useState<{ unit: string; employees: Employee[] } | null>(null);
 
   // Broadcast Channel for secondary screen - use ref to avoid recreation
   const channelRef = React.useRef<BroadcastChannel | null>(null);
@@ -46,13 +52,21 @@ const App: React.FC = () => {
       const { type, data } = event.data;
       if (type === 'UPDATE_RESULT') {
         setSearchResult(data);
+        setDisplayUnitList(null);
         if (isDisplayMode) setView('result');
       } else if (type === 'RESET') {
         setSearchResult(null);
+        setDisplayUnitList(null);
         if (isDisplayMode) setView('upload');
       } else if (type === 'SYNC_DATA') {
         setPersonnelData(data);
         if (isDisplayMode) setView('upload');
+      } else if (type === 'SHOW_FINAL_LIST') {
+        setSelectedEmployees(data);
+        setDisplayUnitList(null);
+        if (isDisplayMode) setView('final');
+      } else if (type === 'SHOW_UNIT_LIST') {
+        setDisplayUnitList(data);
       }
     };
 
@@ -93,6 +107,19 @@ const App: React.FC = () => {
     console.log('Search - Unit:', selectedUnit, 'Serial:', serialNumber.trim());
     console.log('Found employee:', found);
     
+    // Add employee to selected list if found and not already added
+    if (found) {
+      setSelectedEmployees(prev => {
+        const alreadyExists = prev.some(
+          emp => emp.unit === found.unit && emp.serial === found.serial
+        );
+        if (!alreadyExists) {
+          return [...prev, found];
+        }
+        return prev;
+      });
+    }
+    
     // CHỈ gửi dữ liệu sang màn hình trình chiếu, KHÔNG hiển thị trên màn hình điều khiển
     if (channelRef.current) {
       channelRef.current.postMessage({ type: 'UPDATE_RESULT', data: found || null });
@@ -105,10 +132,34 @@ const App: React.FC = () => {
   const handleBackToSearch = () => {
     setView('search');
   };
+  
+  const handleFinish = () => {
+    setView('final');
+    // Send final list to display screen
+    if (channelRef.current) {
+      channelRef.current.postMessage({ type: 'SHOW_FINAL_LIST', data: selectedEmployees });
+    }
+  };
+
+  const handleShowUnitList = (unit: string, employees: Employee[]) => {
+    setUnitListModal({ unit, employees });
+    if (channelRef.current) {
+      channelRef.current.postMessage({ type: 'SHOW_UNIT_LIST', data: { unit, employees } });
+    }
+  };
+
+  const handleCloseUnitList = () => {
+    setUnitListModal(null);
+  };
+  
+  const handleBackFromFinal = () => {
+    setView('search');
+  };
 
   const handleReset = () => {
     setPersonnelData(null);
     setSearchResult(null);
+    setSelectedEmployees([]);
     if (channelRef.current) {
       channelRef.current.postMessage({ type: 'RESET' });
     }
@@ -131,11 +182,14 @@ const App: React.FC = () => {
         const left = externalScreen.availLeft;
         const top = externalScreen.availTop;
         
-        window.open(
+        const presentationWindow = window.open(
           window.location.pathname + '?mode=display',
           '_blank',
           `left=${left},top=${top},width=${width},height=${height},fullscreen=yes`
         );
+        presentationWindow?.addEventListener('load', () => {
+          presentationWindow.document.documentElement.requestFullscreen?.().catch(() => undefined);
+        });
       } else {
         // Fallback: Mở window ở vị trí offset (giả định màn hình 2 ở bên phải)
         const screenWidth = window.screen.width;
@@ -147,33 +201,68 @@ const App: React.FC = () => {
         const width = screenWidth;
         const height = screenHeight;
         
-        window.open(
+        const presentationWindow = window.open(
           window.location.pathname + '?mode=display',
           '_blank',
           `left=${left},top=${top},width=${width},height=${height}`
         );
+        presentationWindow?.addEventListener('load', () => {
+          presentationWindow.document.documentElement.requestFullscreen?.().catch(() => undefined);
+        });
       }
     } catch (error) {
       console.error('Error opening secondary screen:', error);
       // Fallback to simple window
-      window.open(window.location.pathname + '?mode=display', '_blank', 'width=1920,height=1080');
+      const presentationWindow = window.open(
+        window.location.pathname + '?mode=display',
+        '_blank',
+        'width=1920,height=1080'
+      );
+      presentationWindow?.addEventListener('load', () => {
+        presentationWindow.document.documentElement.requestFullscreen?.().catch(() => undefined);
+      });
     }
   };
 
   // If in display mode, we show a simplified immersive UI
   if (isDisplayMode) {
+    const handleBackToApp = () => {
+      window.location.href = window.location.pathname;
+    };
+
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-8 overflow-hidden relative">
-        <Fireworks />
-        <div className="relative z-10 w-full max-w-4xl animate-fadeIn">
-          {searchResult ? (
+      <div className="w-screen h-screen bg-blue-900 flex flex-col items-center justify-center p-0 overflow-hidden relative">
+        <div className="relative z-10 w-full h-full animate-fadeIn flex items-center justify-center">
+          {displayUnitList ? (
+            <div className="w-full h-full flex flex-col items-center justify-center px-8 py-10">
+              <div className="text-center mb-6">
+                <h2 className="text-3xl md:text-4xl font-bold text-white">Danh sách theo đơn vị</h2>
+                <p className="text-white text-xl mt-2 font-semibold">
+                  {displayUnitList.unit}
+                  <span className="ml-3 text-white/80 text-base font-semibold">({displayUnitList.employees.length} người)</span>
+                </p>
+              </div>
+              <div className="w-full max-w-5xl bg-white/10 border border-white/10 rounded-2xl p-6 overflow-y-auto max-h-[75vh]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {displayUnitList.employees.map((emp, idx) => (
+                    <div key={`${emp.serial}-${idx}`} className="bg-white/10 rounded-xl p-4 border border-white/10 flex flex-col items-center text-center">
+                      <div className="text-white font-bold text-lg">{emp.fullName}</div>
+                      <div className="text-blue-200 text-sm">{emp.jobTitle || 'Cán bộ'}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : view === 'final' ? (
+            <FinalResultDisplay employees={selectedEmployees} onBackToSearch={handleBackToApp} />
+          ) : searchResult ? (
             <ResultDisplay employee={searchResult} hasSearched={true} />
           ) : (
             <div className="text-center">
               <img 
                 src="https://upload.wikimedia.org/wikipedia/vi/4/42/Logo_Ki%E1%BB%83m_to%C3%A1n_nh%C3%A0_n%C6%B0%E1%BB%9Bc_Vi%E1%BB%87t_Nam.jpg" 
                 alt="SAV Logo" 
-                className="h-32 mx-auto mb-8 rounded-2xl shadow-2xl border-4 border-white/10"
+                className="h-40 mx-auto mb-8 rounded-2xl shadow-2xl border-4 border-white/10"
               />
               <h1 className="text-4xl font-bold text-white mb-4 tracking-widest uppercase">Màn hình Trình chiếu</h1>
               <p className="text-blue-400 text-xl animate-pulse">Đang chờ lệnh từ hệ thống điều khiển...</p>
@@ -185,12 +274,10 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col transition-colors duration-1000 ${view === 'result' ? 'bg-slate-900' : 'bg-slate-50'}`}>
-      {/* Show fireworks on main result view too */}
-      {view === 'result' && <Fireworks />}
+    <div className={`min-h-screen flex flex-col transition-colors duration-1000 ${view === 'result' || view === 'final' ? 'bg-blue-900' : 'bg-slate-50'}`}>
 
       {/* Header */}
-      <header className={`${view === 'result' ? 'bg-blue-900/40 backdrop-blur-md border-b border-white/10' : 'bg-blue-800'} text-white shadow-lg shrink-0 relative z-20 transition-colors`}>
+      <header className={`${view === 'result' || view === 'final' ? 'bg-blue-900/40 backdrop-blur-md border-b border-white/10' : 'bg-blue-800'} text-white shadow-lg shrink-0 relative z-20 transition-colors`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -268,6 +355,21 @@ const App: React.FC = () => {
                 onSerialChange={setSerialNumber}
                 onSearch={handleSearch}
               />
+              
+              <SelectedEmployeesList 
+                employees={selectedEmployees}
+                onFinish={handleFinish}
+                onShowUnitList={handleShowUnitList}
+              />
+            </div>
+          )}
+
+          {view === 'final' && (
+            <div className="animate-fadeIn">
+              <FinalResultDisplay 
+                employees={selectedEmployees}
+                onBackToSearch={handleBackFromFinal}
+              />
             </div>
           )}
 
@@ -275,10 +377,39 @@ const App: React.FC = () => {
         </div>
       </main>
 
+      {unitListModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-800">Danh sách theo đơn vị: {unitListModal.unit}</h3>
+              <button
+                onClick={handleCloseUnitList}
+                className="text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-md font-semibold"
+              >
+                Đóng
+              </button>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto space-y-2">
+              {unitListModal.employees.map((emp, idx) => (
+                <div key={`${emp.serial}-${idx}`} className="flex items-center gap-3 bg-slate-50 p-3 rounded-md border border-slate-200">
+                  <div className="bg-blue-100 text-blue-800 font-bold text-sm px-3 py-1 rounded-md min-w-[60px] text-center">
+                    STT {emp.serial}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-slate-800">{emp.fullName}</div>
+                    <div className="text-xs text-slate-500">{emp.jobTitle}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
-      <footer className={`shrink-0 border-t ${view === 'result' ? 'border-white/10 bg-black/40' : 'border-slate-200 bg-white'} py-4 relative z-10 transition-colors`}>
+      <footer className={`shrink-0 border-t ${view === 'result' || view === 'final' ? 'border-white/10 bg-black/40' : 'border-slate-200 bg-white'} py-4 relative z-10 transition-colors`}>
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className={`${view === 'result' ? 'text-white/40' : 'text-slate-400'} text-xs`}>© 2024 KIỂM TOÁN NHÀ NƯỚC VIỆT NAM. Bảng điều khiển quản lý.</p>
+          <p className={`${view === 'result' || view === 'final' ? 'text-white/40' : 'text-slate-400'} text-xs`}>© 2024 KIỂM TOÁN NHÀ NƯỚC VIỆT NAM. Bảng điều khiển quản lý.</p>
         </div>
       </footer>
 
