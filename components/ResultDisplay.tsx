@@ -25,9 +25,9 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ employee, hasSearched }) 
   }
 
   return (
-    <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden w-full max-w-5xl mx-auto flex flex-col md:flex-row transition-all hover:scale-[1.01]">
+    <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden max-w-[96vw] mx-auto inline-flex flex-col md:flex-row transition-all hover:scale-[1.01]">
       {/* Left Sidebar Info */}
-      <div className="bg-blue-800/90 p-8 md:w-1/3 flex flex-col items-center justify-center text-center text-white relative overflow-hidden">
+      <div className="bg-blue-800/90 p-8 md:w-[260px] flex flex-col items-center justify-center text-center text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-700/50 to-indigo-900/50 pointer-events-none"></div>
         <div className="bg-white/20 p-4 rounded-3xl backdrop-blur-md mb-6 border border-white/30 relative z-10 shadow-inner">
           <div className="text-5xl font-black drop-shadow-lg">{employee.serial}</div>
@@ -44,7 +44,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ employee, hasSearched }) 
       </div>
 
       {/* Main Employee Details */}
-      <div className="p-8 md:w-2/3 bg-white/60 relative">
+      <div className="p-8 md:w-auto bg-white/60 relative w-fit">
         <div className="absolute top-0 right-0 p-8 opacity-5">
           <svg className="w-32 h-32 text-blue-900" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm2.5 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm2.45 4a2.5 2.5 0 10-4.9 0h4.9zM12 9a1 1 0 100 2h3a1 1 0 100-2h-3zm-1 4a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z" clipRule="evenodd" />
@@ -55,7 +55,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ employee, hasSearched }) 
           <div className="mb-2 inline-flex w-fit">
             <span className="text-xs md:text-sm font-black text-blue-600 uppercase tracking-[0.2em] whitespace-nowrap">Người được xác minh tài sản, thu nhập năm 2026</span>
           </div>
-          <h2 className="text-5xl md:text-6xl font-extrabold text-red-700 mb-8 leading-tight drop-shadow-sm">{employee.fullName}</h2>
+          <h2 className="text-5xl md:text-6xl font-extrabold text-red-700 mb-8 leading-tight drop-shadow-sm whitespace-nowrap">{employee.fullName}</h2>
           
           <div className="space-y-6 mt-4">
             <div className="group transition-all">
