@@ -5,9 +5,11 @@ interface SelectedEmployeesListProps {
   employees: Employee[];
   onFinish: () => void;
   onShowUnitList: (unit: string, employees: Employee[]) => void;
+  onRemoveEmployee: (employee: Employee) => void;
+  onExport: () => void;
 }
 
-const SelectedEmployeesList: React.FC<SelectedEmployeesListProps> = ({ employees, onFinish, onShowUnitList }) => {
+const SelectedEmployeesList: React.FC<SelectedEmployeesListProps> = ({ employees, onFinish, onShowUnitList, onRemoveEmployee, onExport }) => {
   // Group employees by unit
   const groupedByUnit = employees.reduce((acc, employee) => {
     if (!acc[employee.unit]) {
@@ -30,15 +32,26 @@ const SelectedEmployeesList: React.FC<SelectedEmployeesListProps> = ({ employees
           </svg>
           Danh sách đã chọn ({employees.length} cán bộ)
         </h3>
-        <button
-          onClick={onFinish}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow-md transition-all active:scale-[0.98] flex items-center gap-2"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-          </svg>
-          Kết thúc
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onExport}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold shadow-md transition-all active:scale-[0.98] flex items-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 16v-8m0 0l-4 4m4-4l4 4M5 20h14a2 2 0 002-2v-4m-18 0v4a2 2 0 002 2" />
+            </svg>
+            Xuất Excel
+          </button>
+          <button
+            onClick={onFinish}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold shadow-md transition-all active:scale-[0.98] flex items-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            Kết thúc
+          </button>
+        </div>
       </div>
 
       <div className="space-y-4 max-h-96 overflow-y-auto">
@@ -69,6 +82,14 @@ const SelectedEmployeesList: React.FC<SelectedEmployeesListProps> = ({ employees
                     <div className="font-semibold text-slate-800">{emp.fullName}</div>
                     <div className="text-xs text-slate-500">{emp.jobTitle}</div>
                   </div>
+                  <button
+                    onClick={() => onRemoveEmployee(emp)}
+                    className="text-xs bg-red-600 hover:bg-red-700 text-white px-2.5 py-1.5 rounded-md font-semibold shadow-sm transition-all active:scale-[0.98]"
+                    title="Xóa khỏi danh sách"
+                    aria-label={`Xóa ${emp.fullName}`}
+                  >
+                    -
+                  </button>
                 </div>
               ))}
             </div>

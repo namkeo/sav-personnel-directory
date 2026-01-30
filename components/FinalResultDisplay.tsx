@@ -28,7 +28,7 @@ const FinalResultDisplay: React.FC<FinalResultDisplayProps> = ({ employees, onBa
         <p className="text-slate-500">Tổng cộng: <span className="font-bold text-blue-600">{employees.length}</span> người được xác minh tài sản, thu nhập năm 2026</p>
       </div>
 
-      {/* Grid 8 cột x 5 hàng */}
+      {/* Grid 4 cột x 5 hàng */}
       <div className="max-h-[70vh] overflow-y-auto pr-2 space-y-6">
         {Object.entries(groupedByUnit).map(([unit, unitEmployees]) => (
           <div key={unit} className="space-y-3">

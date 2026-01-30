@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import * as XLSX from 'xlsx';
 import { parsePersonnelExcel } from './utils/excelParser';
 import { Employee, PersonnelData } from './types';
 import FileUpload from './components/FileUpload';
@@ -141,6 +142,37 @@ const App: React.FC = () => {
     }
   };
 
+  const handleRemoveSelectedEmployee = (employee: Employee) => {
+    setSelectedEmployees((prev) => {
+      const next = prev.filter(
+        (emp) => !(emp.unit === employee.unit && emp.serial === employee.serial)
+      );
+
+      // Keep modal in sync if it's open
+      if (unitListModal && unitListModal.unit === employee.unit) {
+        const nextUnitEmployees = next.filter((emp) => emp.unit === employee.unit);
+        if (nextUnitEmployees.length === 0) {
+          setUnitListModal(null);
+          if (channelRef.current) {
+            channelRef.current.postMessage({ type: 'SHOW_UNIT_LIST', data: null });
+          }
+        } else {
+          const updatedUnitList = { unit: employee.unit, employees: nextUnitEmployees };
+          setUnitListModal(updatedUnitList);
+          if (channelRef.current) {
+            channelRef.current.postMessage({ type: 'SHOW_UNIT_LIST', data: updatedUnitList });
+          }
+        }
+      }
+
+      if (channelRef.current) {
+        channelRef.current.postMessage({ type: 'SHOW_FINAL_LIST', data: next });
+      }
+
+      return next;
+    });
+  };
+
   const handleShowUnitList = (unit: string, employees: Employee[]) => {
     setUnitListModal({ unit, employees });
     if (channelRef.current) {
@@ -154,6 +186,36 @@ const App: React.FC = () => {
   
   const handleBackFromFinal = () => {
     setView('search');
+  };
+
+  const handleExportSelectedEmployees = () => {
+    if (selectedEmployees.length === 0) return;
+
+    const groupedByUnit = selectedEmployees.reduce((acc, employee) => {
+      if (!acc[employee.unit]) {
+        acc[employee.unit] = [];
+      }
+      acc[employee.unit].push(employee);
+      return acc;
+    }, {} as Record<string, Employee[]>);
+
+    const rows: (string | number)[][] = [];
+
+    Object.entries(groupedByUnit).forEach(([unit, unitEmployees]) => {
+      rows.push([unit]);
+      rows.push(['STT', 'Họ và tên', 'Chức danh']);
+      unitEmployees.forEach((emp) => {
+        rows.push([emp.serial, emp.fullName, emp.jobTitle || '']);
+      });
+      rows.push([]);
+    });
+
+    const worksheet = XLSX.utils.aoa_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách đã chọn');
+
+    const fileName = `danh-sach-da-chon-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
   };
 
   const handleReset = () => {
@@ -360,6 +422,8 @@ const App: React.FC = () => {
                 employees={selectedEmployees}
                 onFinish={handleFinish}
                 onShowUnitList={handleShowUnitList}
+                onRemoveEmployee={handleRemoveSelectedEmployee}
+                onExport={handleExportSelectedEmployees}
               />
             </div>
           )}
